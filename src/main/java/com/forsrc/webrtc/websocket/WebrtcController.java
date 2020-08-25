@@ -59,6 +59,9 @@ public class WebrtcController {
 	public void user(@DestinationVariable("toSession") String toSession, @Headers Map<String, Object> headers,
 			@Payload String body, Principal principal, SimpMessageHeaderAccessor headerAccessor)
 			throws IOException, InterruptedException {
+		if (headerAccessor.getSessionId().equals(toSession)) {
+			return;
+		}
 		System.out.println(String.format("from %s to /session/%s/webrtc -> %s", headerAccessor.getSessionId(), toSession, body));
 
 		Map<String, Object> map = new HashMap<>();
