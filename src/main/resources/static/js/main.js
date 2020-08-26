@@ -40,7 +40,7 @@ _client.connect({
 	_client.subscribe("/user/session", function (res) {
 		console.log('/user/session', res);
 		if(_sessionId != res.body) {
-			console.error("session", _session, res.body);
+			console.error("session", _sessionId, res.body);
 			_sessionId = res.body;
 		}
 	});
