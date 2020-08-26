@@ -1,5 +1,7 @@
 var _socket = new SockJS("/websocket");
 
+
+
 var _client = Stomp.over(_socket);
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -10,19 +12,21 @@ var _room = "room-001";
 var _localVideo;
 var _sessionId;
 var _localStream;
-var _pc = [];
+var _pc = {};
 
-var _peerConnectionConfig = {
-	'iceServers': [
-		{ 'urls': 'stun:stun.services.mozilla.com' },
-		{ 'urls': 'stun:stun.l.google.com:19302' },
-	]
-};
+var _peerConnectionConfig = {"iceServers":[{"urls":["turn:192.168.2.110:3478"],"username":"forsrc","credential":"forsrc"}],"iceTransportPolicy":"all","iceCandidatePoolSize":"0"};
 
 function getSessionId(socket) {
 	var url = socket._transport.url;
     return url.match(/^.*\/[0-9]*\/(.*)\/websocket/)[1];;
 }
+
+
+_socket.onclose = function() {
+	Object.keys(_pc).forEach(function (key) {
+		leave(key);
+	});
+};
 
 _client.connect({
 	username: _user,
@@ -81,19 +85,24 @@ async function call(client) {
 			return;
 		}
 
-		if (signal.sdp) {
-			console.log("signal.sdp:", signal.sdp);
-			await _pc[id].setRemoteDescription(new RTCSessionDescription(signal.sdp))
-			if (signal.sdp.type == 'offer') {
-				var description = await _pc[id].createAnswer();
-				await _pc[id].setLocalDescription(description);
+		if (signal.offer) {
+			console.log("signal.offer:", signal.offer);
+			await _pc[id].setRemoteDescription(new RTCSessionDescription(signal.offer));
+			if (signal.offer.type == 'offer') {
+				var answer = await _pc[id].createAnswer();
+				await _pc[id].setLocalDescription(answer);
 
 				//socket.emit('signal', id, JSON.stringify({ 'sdp': _pc[id].localDescription }));
 				_client.send("/app/session/" + id + "/webrtc", {}, JSON.stringify({
-					'sdp': _pc[id].localDescription
+					'answer': answer
 				}));
 
 			}
+		}
+		
+		if (signal.answer && signal.answer.type == 'answer') {
+			console.log("signal.answer:", signal.answer);
+			await _pc[id].setRemoteDescription(new RTCSessionDescription(signal.answer));
 		}
 		if (signal.ice) {
 			console.log("signal.ice:", signal.ice);
@@ -126,23 +135,28 @@ async function call(client) {
 
 			//Wait for their video stream
 			_pc[clintSessionId].onaddstream = function (event) {
-				gotRemoteStream(event, clintSessionId)
+				createRemoteVideo(event.stream, clintSessionId);
 			}
 
 			//Add the local video stream
 			_pc[clintSessionId].addStream(_localStream);
+			
+
+
 
 		});
+		
+
 
 		//Create an offer to connect with your local description
 		if (allSessions.length >= 2) {
 			console.log('await _pc[id].createOffer()');
-			var description = await _pc[id].createOffer();
-			await _pc[id].setLocalDescription(description);
+			var offer = await _pc[id].createOffer();
+			await _pc[id].setLocalDescription(offer);
 			// console.log(_pc);
 			//socket.emit('signal', id, JSON.stringify({ 'sdp': _pc[id].localDescription }));
 			_client.send("/app/session/" + id + "/webrtc", {}, JSON.stringify({
-				'sdp': _pc[id].localDescription
+				'offer': offer
 			}));
 		}
 	});
@@ -166,14 +180,13 @@ function leave(sessionId) {
 	}
 };
 
-
-function gotRemoteStream(event, sessionId) {
+function createRemoteVideo(stream, sessionId) {
 
 	var video = document.createElement('video');
 	var div = document.createElement('div');
 
 	video.setAttribute('data-socket', sessionId);
-	video.srcObject = event.stream;
+	video.srcObject = stream;
 	video.autoplay = true;
 	video.muted = true;
 	video.playsinline = true;
@@ -181,3 +194,4 @@ function gotRemoteStream(event, sessionId) {
 	div.appendChild(video);
 	document.querySelector('.videos').appendChild(div);
 }
+

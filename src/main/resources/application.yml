@@ -1,1 +1,16 @@
 
+server:
+  port: 8080
+
+  ssl:
+    key-store-provider:   SUN
+    key-store-type:       JKS
+    key-store:            classpath:ssl/my-webrtc.server.keystore
+    key-store-password:   forsrc
+    key-alias:            my-webrtc.server
+    enabled:              true
+    trust-store-provider: SUN
+    trust-store-type:     JKS
+    trust-store:          classpath:ssl/my-webrtc.server.keystore
+    trust-store-password: forsrc
+    #client-auth:          need
