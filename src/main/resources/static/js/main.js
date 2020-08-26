@@ -3,6 +3,7 @@ var _socket = new SockJS("/websocket");
 
 
 var _client = Stomp.over(_socket);
+_client.debug = null
 
 const urlParams = new URLSearchParams(window.location.search);
 const username = urlParams.get('username');
