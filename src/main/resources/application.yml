@@ -9,8 +9,8 @@ server:
     key-store-password:   forsrc
     key-alias:            my-webrtc.server
     enabled:              true
-    trust-store-provider: SUN
-    trust-store-type:     JKS
-    trust-store:          classpath:ssl/my-webrtc.server.keystore
-    trust-store-password: forsrc
+    #trust-store-provider: SUN
+    #trust-store-type:     JKS
+    #trust-store:          classpath:ssl/my-webrtc.server.keystore
+    #trust-store-password: forsrc
     #client-auth:          need
