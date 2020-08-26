@@ -113,7 +113,7 @@ async function call(client) {
 			_pc[clintSessionId] = new RTCPeerConnection(_peerConnectionConfig);
 			//Wait for their ice candidate       
 			_pc[clintSessionId].onicecandidate = function (event) {
-				if (event.candidate == null) {
+				if (event.candidate == null || clintSessionId == _sessionId) {
 					return;
 				}
 				console.log('SENDING ICE');
